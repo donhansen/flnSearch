@@ -13,6 +13,8 @@ namespace FlnSearch
 {
     public class AwsSearch
     {
+        private static readonly List<string> FieldNames = new List<string> { "CustomerNumber", "OrderNumber", "OrderDate" };
+
         private string _baseUrl;
         private static readonly HttpClient _httpClient;
 
@@ -58,10 +60,12 @@ namespace FlnSearch
             //    return result; 
         }
 
-        private async Task<string> RunSearchPost(Domain.OrderSearch searchCriteria)
+        private async Task<string> RunSearchPost(SearchRequest request)
         {
             var url = string.Format("{0}/orders/_search", _baseUrl);
             var jsonText = "{\"size\":20, \"query\":{\"query_string\":{\"default_field\":\"OrderStatus\",\"query\":\"Entered\"}}}";
+
+            jsonText = request.GenerateJsonString();
 
             var content = new StringContent(jsonText, Encoding.UTF8, "application/json");
             var response = await _httpClient.PostAsync(url, content);
@@ -74,7 +78,7 @@ namespace FlnSearch
         public async Task<string> RunSearchPost(string searchText)
         {
             var url = string.Format("{0}/orders/_search", _baseUrl);
-//            var jsonText = string.Format("{{\"size\":20, \"query\":{{\"query_string\":{{\"default_field\":\"OrderNumber\",\"query\":\"{0}\"}}}}}}", searchText);
+            //            var jsonText = string.Format("{{\"size\":20, \"query\":{{\"query_string\":{{\"default_field\":\"OrderNumber\",\"query\":\"{0}\"}}}}}}", searchText);
 
             var jsonText = string.Format("{{\"size\":20, \"query\":{{\"query_string\":{{\"query\":\"{0}\"}}}}}}", searchText);
 
@@ -88,18 +92,18 @@ namespace FlnSearch
         }
 
 
-        public SearchResult DoSearch(string searchText)
+        public SearchResult DoSearch(SearchRequest request)
         {
             var searchresult = new SearchResult();
-            var jsonText = RunSearchPost(searchText).Result;
+            var jsonText = RunSearchPost(request).Result;
 
             JObject awsSearch = JObject.Parse(jsonText);
             searchresult.Took = (int)awsSearch["took"];
             searchresult.TimedOut = (bool)awsSearch["timed_out"];
+            searchresult.MatchCount = (int)awsSearch["hits"]["total"];
 
             List<JToken> hits = awsSearch["hits"]["hits"].Children().ToList();
 
-            //List<SearchResultItem> searchResults = new List<SearchResultItem>();
             foreach (var token in hits)
             {
                 var resultItem = token.ToObject<SearchResultItem>();
@@ -108,6 +112,9 @@ namespace FlnSearch
                 {
                     var name = ((JProperty)s).Name;
                     var value = GetValue(((JProperty)s).Value);
+
+                    if (FieldNames.Contains(name))
+                        resultItem.SetPropertyValue(name, value);
 
                     resultItem.AddSource(new SearchItem() { Name = name, Value = value });
                 }

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using FlnSearch;
+using FlnSearch.Domain;
 
 namespace SearchTester
 {
@@ -11,34 +13,31 @@ namespace SearchTester
         static void Main(string[] args)
         {
             string readLineText = string.Empty;
-
-             while(readLineText.ToLower() != "x")
+            Console.WriteLine("11411657");
+            while (readLineText.ToLower() != "x")
             {
-                Console.WriteLine("11411657");
-                Console.WriteLine("Enter search text or 'x' to close");
+                Console.WriteLine("Enter Max count");
+                var count = Console.ReadLine();
+
+
+                var request = new SearchRequest() { Size = Convert.ToInt32(count)};
+                request.CustomerNumber = 31195;
+                request.OrderStatus = "Entered";
+                var result = Search(request);
+
+                Console.WriteLine("__________________________________________________");
+
+                Console.WriteLine("Enter 'x' to quit or enter to start a new search");
                 readLineText = Console.ReadLine();
 
-                if (readLineText.ToLower() != "x")
-                {
-                    var result = Search(readLineText);
 
-                    Console.WriteLine("__________________________________________________");
-
-                //    var task = RunSearch(readLineText).Result;
-                //    Console.WriteLine(task);
-
-                //    Console.WriteLine("__________________________________________________");
-
-                //    var taskPost = PostSearch(readLineText).Result;
-                //    Console.WriteLine(taskPost);
-                }
             }
         }
 
-        public static object Search(string searchText)
+        public static object Search(SearchRequest request)
         {
             var search = new FlnSearch.AwsSearch();
-            object results = search.DoSearch(searchText);
+            object results = search.DoSearch(request);
 
             return results;
         }

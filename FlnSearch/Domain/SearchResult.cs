@@ -14,6 +14,8 @@ namespace FlnSearch.Domain
         [JsonProperty(PropertyName = "timed_out")]
         public bool TimedOut { get; set; }
 
+        public int MatchCount { get; set; }
+
         private List<SearchResultItem> _resultItems;
         public List<SearchResultItem> ResultItems
         {
