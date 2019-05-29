@@ -14,22 +14,33 @@ namespace SearchTester
 
              while(readLineText.ToLower() != "x")
             {
+                Console.WriteLine("11411657");
                 Console.WriteLine("Enter search text or 'x' to close");
                 readLineText = Console.ReadLine();
 
                 if (readLineText.ToLower() != "x")
                 {
-                    var task = RunSearch(readLineText).Result;
-                    Console.WriteLine(task);
+                    var result = Search(readLineText);
 
                     Console.WriteLine("__________________________________________________");
 
-                    var taskPost = PostSearch(readLineText).Result;
-                    Console.WriteLine(taskPost);
-                }
+                //    var task = RunSearch(readLineText).Result;
+                //    Console.WriteLine(task);
 
-                   
+                //    Console.WriteLine("__________________________________________________");
+
+                //    var taskPost = PostSearch(readLineText).Result;
+                //    Console.WriteLine(taskPost);
+                }
             }
+        }
+
+        public static object Search(string searchText)
+        {
+            var search = new FlnSearch.AwsSearch();
+            object results = search.DoSearch(searchText);
+
+            return results;
         }
 
         public static async Task<string> RunSearch(string text)

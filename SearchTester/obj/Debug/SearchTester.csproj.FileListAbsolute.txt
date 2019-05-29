@@ -6,3 +6,4 @@ c:\users\niels hansen\documents\visual studio 2012\Projects\FlnSearch\SearchTest
 c:\users\niels hansen\documents\visual studio 2012\Projects\FlnSearch\SearchTester\obj\Debug\SearchTester.csprojResolveAssemblyReference.cache
 c:\users\niels hansen\documents\visual studio 2012\Projects\FlnSearch\SearchTester\obj\Debug\SearchTester.exe
 c:\users\niels hansen\documents\visual studio 2012\Projects\FlnSearch\SearchTester\obj\Debug\SearchTester.pdb
+C:\Users\Niels Hansen\documents\visual studio 2012\Projects\FlnSearch\SearchTester\bin\Debug\Newtonsoft.Json.dll
