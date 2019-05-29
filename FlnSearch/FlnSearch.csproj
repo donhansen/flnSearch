@@ -30,6 +30,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\..\..\..\..\..\..\gitProjects\fln\FirstLegalNetworkServices\bin\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
@@ -44,7 +47,10 @@
   <ItemGroup>
     <Compile Include="AwsSearch.cs" />
     <Compile Include="Domain\OrderSearch.cs" />
+    <Compile Include="Domain\SearchItem.cs" />
     <Compile Include="Domain\SearchRequest.cs" />
+    <Compile Include="Domain\SearchResult.cs" />
+    <Compile Include="Domain\SearchResultItem.cs" />
     <Compile Include="Domain\SortItem.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
