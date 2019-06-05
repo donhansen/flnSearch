@@ -45,7 +45,10 @@ namespace FlnSearch.Domain
             if (propertyInfo.PropertyType == typeof(DateTime))
             {
                 if (value != null)
-                    propertyInfo.SetValue(this, Convert.ToDateTime(value));
+                {
+                    DateTime date = new DateTime(Convert.ToInt64(value));
+                    propertyInfo.SetValue(this, date);
+                }
             }
             else
                 propertyInfo.SetValue(this, value);
