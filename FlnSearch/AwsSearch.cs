@@ -8,6 +8,7 @@ using System.Net.Http;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using FlnSearch.Domain;
+using System.Reflection;
 
 namespace FlnSearch
 {
@@ -28,7 +29,7 @@ namespace FlnSearch
             { "ClientMatter", "text" },  
             };
 
-        private static readonly List<string> FieldNames = new List<string> { "CustomerNumber", "OrderNumber", "OrderDate" };
+        // private static readonly List<string> FieldNames = new List<string> { "CustomerNumber", "OrderNumber", "OrderDate" };
 
         private string _baseUrl;
         private string _index;
@@ -158,7 +159,7 @@ namespace FlnSearch
                 builder.Append(Environment.NewLine);
                 builder.Append("{");
                 builder.AppendFormat("\"OrderNumber\":{0}", record.OrderNumber);
-                 builder.AppendFormat(",\"OrderDate\":\"{0}\"", record.OrderDate.Ticks);
+                builder.AppendFormat(",\"OrderDate\":\"{0}\"", record.OrderDate.ToString("yyyy-MM-ddTHH:mm:ssZ"));
                 builder.AppendFormat(",\"OrderDateTicks\":{0}", record.OrderDate.Ticks);
                 builder.AppendFormat(",\"ServiceType\":{0}", record.ServiceType);
                 if (!string.IsNullOrEmpty(record.OrderStatusCode))
@@ -191,7 +192,7 @@ namespace FlnSearch
             var searchresult = new SearchResult();
 
             var url = string.Format("{0}/{1}/_search", _baseUrl, _index);
-            var requestText = request.GenerateJsonString();
+            var requestText = request.GenerateSearchQuery();
             var responseJson = PostAsync(url, requestText).Result;
 
             JObject awsSearch = JObject.Parse(responseJson);
@@ -200,6 +201,7 @@ namespace FlnSearch
             searchresult.MatchCount = (int)awsSearch["hits"]["total"];
 
             List<JToken> hits = awsSearch["hits"]["hits"].Children().ToList();
+            var properties = typeof(SearchResultItem).GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanWrite);
 
             foreach (var token in hits)
             {
@@ -207,14 +209,26 @@ namespace FlnSearch
                 List<JToken> fields = token["_source"].Children().ToList();
                 foreach (JToken s in fields)
                 {
+                    JValue jValue = ((JProperty)s).Value as JValue;
                     var name = ((JProperty)s).Name;
-                    object value = null;
-                    if (FieldNames.Contains(name))
-                    {
-                         value = GetValue(((JProperty)s).Value);
-                        resultItem.SetPropertyValue(name, value);
-                    }
+                    object value = jValue != null ? jValue.Value : null;
                     resultItem.AddSource(new SearchItem() { Name = name, Value = value });
+
+                    //if has a value then set the property (if present)
+                    if (value != null)
+                    {
+                        //set the result items property
+                        var prop = properties.FirstOrDefault(p => p.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+                        if (prop != null)
+                        {
+                            Type propType = prop.PropertyType;
+                            if (propType.IsGenericType && propType.GetGenericTypeDefinition().Equals(typeof(Nullable<>)))
+                            {  //get underyling type
+                                propType = Nullable.GetUnderlyingType(propType);
+                            }
+                            prop.SetValue(resultItem, Convert.ChangeType(value, propType), null);
+                        }
+                    }
                 }
                 searchresult.AddSearchResultItem(resultItem);
             }

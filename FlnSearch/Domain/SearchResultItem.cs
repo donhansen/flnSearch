@@ -20,9 +20,15 @@ namespace FlnSearch.Domain
         [JsonProperty(PropertyName = "_score")]
         public decimal Score { get; set; }
 
-        public int OrderNumber { get; set; }
-        public int CustomerNumber { get; set; }
-        public DateTime OrderDate { get; set; }
+        public int? OrderNumber { get; set; }
+        public int? CustomerNumber { get; set; }
+        public DateTime? OrderDate { get; set; }
+        public int? ServiceType { get; set; }
+        public string OrderStatus { get; set; }
+        public string RecipientCompany { get; set; }
+        public string RecipientName { get; set; }
+        public string Clientmatter { get; set; }
+
 
         private List<SearchItem> _source;
         public List<SearchItem> Source

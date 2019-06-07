@@ -13,7 +13,7 @@ namespace SearchTester
     {
         static void Main(string[] args)
         {
-           // LoadIndex();
+            //LoadIndex();
 
             string readLineText = string.Empty;
             Console.WriteLine("11411657");
@@ -34,8 +34,11 @@ namespace SearchTester
 
 
                 var request = new SearchRequest() { Size = Convert.ToInt32(count) };
-                request.CustomerNumber = 31195;
-                request.OrderStatus = "Entered";
+                //request.CustomerNumber = 31195;
+                //request.OrderStatus = "Entered";
+                request.ServiceType = 88;
+                request.StartDate = new DateTime(2019, 5, 9);
+                request.EndDate = new DateTime(2019, 5, 12);
                 var result = Search(request);
 
                 Console.WriteLine("__________________________________________________");
