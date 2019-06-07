@@ -19,8 +19,11 @@ namespace FlnSearch.Domain
         public string RecipientCompany { get; set; }
         public string RecipientName { get; set; }
         public string Clientmatter { get; set; }
+       
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
+        public string SortByField { get; set; }
+        public bool IsSortDESC { get; set; }
 
         //make attribute to be searched instead of this?
         private static readonly List<string> _searchableFields = new List<string> { 
@@ -111,7 +114,14 @@ namespace FlnSearch.Domain
             }
             qry.Append("}");//bool
             qry.Append("}");//query
-            qry.Append("}");
+
+            //apply sorting
+            if (!string.IsNullOrEmpty(SortByField))
+            {
+                qry.Append(",\"sort\":[");
+                qry.AppendFormat("{{\"{0}\":{{\"order\":\"{1}\"}}}}", SortByField, IsSortDESC ? "desc" : "asc");
+            }
+            qry.Append(",\"_score\"]}");
 
 
             return qry.ToString();
