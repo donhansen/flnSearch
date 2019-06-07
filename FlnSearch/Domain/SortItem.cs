@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace FlnSearch.Domain
 {
     [Serializable]
-    public class SortItem
+    public class SortItem: IComparable<SortItem>
     {
         /// <summary>
         /// Name of field to sort by
@@ -21,5 +21,11 @@ namespace FlnSearch.Domain
         /// When true, the sort will be in desending order
         /// </summary>
         public bool IsDesc { get; set; }
+
+        
+        public int CompareTo(SortItem other)
+        {
+            return this.SortOrder.CompareTo(other.SortOrder);
+        }
     }
 }

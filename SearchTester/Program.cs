@@ -38,9 +38,9 @@ namespace SearchTester
                 //request.OrderStatus = "Entered";
                 request.ServiceType = 88;
                 request.StartDate = new DateTime(2019, 5, 9);
-                request.EndDate = new DateTime(2019, 6, 12);
-                request.SortByField ="OrderDate";
-                request.IsSortDESC = false;
+                request.EndDate = new DateTime(2019, 5, 12);
+                request.AddSortField("OrderDate", 0, true);// SortByField = "OrderDate";
+                request.AddSortField("OrderStatus", 1, false);
                 var result = Search(request);
 
                 Console.WriteLine("__________________________________________________");

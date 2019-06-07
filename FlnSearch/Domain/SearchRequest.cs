@@ -19,11 +19,9 @@ namespace FlnSearch.Domain
         public string RecipientCompany { get; set; }
         public string RecipientName { get; set; }
         public string Clientmatter { get; set; }
-       
+
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
-        public string SortByField { get; set; }
-        public bool IsSortDESC { get; set; }
 
         //make attribute to be searched instead of this?
         private static readonly List<string> _searchableFields = new List<string> { 
@@ -37,7 +35,17 @@ namespace FlnSearch.Domain
         };
 
         private List<SortItem> _sort;
-        public List<SortItem> Sort { get; private set; }
+        public List<SortItem> Sort
+        {
+            get
+            {
+                if (_sort == null)
+                    _sort = new List<SortItem>();
+
+                return _sort;
+            }
+            //private set { }
+        }
 
         public void AddSortField(string fieldName, int sortOrder, bool isDesc)
         {
@@ -52,6 +60,8 @@ namespace FlnSearch.Domain
                 item.SortOrder = sortOrder;
                 item.IsDesc = isDesc;
             }
+
+
         }
 
         public string GenerateSearchQuery()
@@ -103,10 +113,10 @@ namespace FlnSearch.Domain
 
                 if (StartDate.HasValue && EndDate.HasValue)
                     qry.AppendFormat("\"gte\":{0},\"lte\":{1}", StartDate.Value.Ticks, EndDate.Value.Ticks);
-                else if(StartDate.HasValue)
+                else if (StartDate.HasValue)
                     qry.AppendFormat("\"gte\":{0}", StartDate.Value.Ticks);
                 else
-                    qry.AppendFormat("\"lte\":{0}",  EndDate.Value.Ticks);
+                    qry.AppendFormat("\"lte\":{0}", EndDate.Value.Ticks);
 
                 qry.Append("}");//orderticks
                 qry.Append("}");//range
@@ -116,64 +126,23 @@ namespace FlnSearch.Domain
             qry.Append("}");//query
 
             //apply sorting
-            if (!string.IsNullOrEmpty(SortByField))
+            if (Sort != null && Sort.Count > 0)
             {
+                Sort.Sort();
                 qry.Append(",\"sort\":[");
-                qry.AppendFormat("{{\"{0}\":{{\"order\":\"{1}\"}}}}", SortByField, IsSortDESC ? "desc" : "asc");
+                for (var i = 0; i < Sort.Count; i++)
+                {
+                    if (i > 0)
+                        qry.Append(",");
+
+                    qry.AppendFormat("{{\"{0}\":{{\"order\":\"{1}\"}}}}", Sort[i].FieldName, Sort[i].IsDesc ? "desc" : "asc");
+                    qry.Append(",\"_score\"]}");
+                }
             }
-            qry.Append(",\"_score\"]}");
+            qry.Append("}");
 
 
             return qry.ToString();
-        }
-
-        public string GenerateJsonString()
-        {
-            StringBuilder builder = new StringBuilder();
-            StringBuilder matchBuilder = new StringBuilder();
-
-            var qryProprties = this.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public).Where(p => p.CanRead && p.CanWrite && _searchableFields.Contains(p.Name)).ToArray();
-
-
-            for (var i = 0; i < qryProprties.Count(); i++)
-            {
-                var property = qryProprties[i];
-                var value = property.GetValue(this);
-                if (property.PropertyType == typeof(string))
-                {
-                    if (value == null)
-                        continue;
-
-                    matchBuilder.AppendFormat("{{\"match\":{{\"{0}\":\"{1}\" }}}},", property.Name, value);
-                }
-                else if (property.PropertyType == typeof(DateTime))
-                {
-                    if ((DateTime)value == DateTime.MinValue)
-                        continue;
-
-                    matchBuilder.AppendFormat("{{\"match\":{{\"{0}\":\"{1}\" }}}},", property.Name, value);
-                }
-                else if (value is int && (int)value > 0)
-                {
-                    matchBuilder.AppendFormat("{{\"match\":{{\"{0}\":{1} }}}},", property.Name, value);
-                }
-            }
-
-
-            builder.Append("{");
-            if (Size > 0)
-                builder.AppendFormat("\"size\":{0},", Size);
-
-            builder.Append("\"query\":{\"bool\":{\"must\":[");
-
-            builder.Append(matchBuilder.ToString().TrimEnd(','));
-
-            builder.Append("]");
-            builder.Append("}");
-            builder.Append("}");
-            builder.Append("}");
-
-            return builder.ToString();
         }
     }
 }
