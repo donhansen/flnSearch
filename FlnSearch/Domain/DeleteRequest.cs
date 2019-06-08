@@ -7,7 +7,7 @@ using System.Reflection;
 
 namespace FlnSearch.Domain
 {
-    public class SearchRequest : QueryRequest
+    public class DeleteRequest: QueryRequest
     {
         public override string GenerateQuery()
         {
@@ -15,8 +15,6 @@ namespace FlnSearch.Domain
             var isFirstMatch = true;
             StringBuilder qry = new StringBuilder();
             qry.Append("{");
-            qry.AppendFormat("\"from\":{0},\"size\":{1},", From.GetValueOrDefault(0), Size.GetValueOrDefault(20));
-            
             qry.Append("\"query\":");
             qry.Append("{");//query
             qry.Append("\"bool\":");
@@ -70,55 +68,11 @@ namespace FlnSearch.Domain
             }
             qry.Append("}");//bool
             qry.Append("}");//query
-
-            //apply sorting
-            if (Sort != null && Sort.Count > 0)
-            {
-                Sort.Sort();
-                qry.Append(",\"sort\":[");
-                for (var i = 0; i < Sort.Count; i++)
-                {
-                    if (i > 0)
-                        qry.Append(",");
-
-                    qry.AppendFormat("{{\"{0}\":{{\"order\":\"{1}\"}}}}", Sort[i].FieldName, Sort[i].IsDesc ? "desc" : "asc");
-                    qry.Append(",\"_score\"]}");
-                }
-            }
             qry.Append("}");
 
 
             return qry.ToString();
         }
 
-        private List<SortItem> _sort;
-        public List<SortItem> Sort
-        {
-            get
-            {
-                if (_sort == null)
-                    _sort = new List<SortItem>();
-
-                return _sort;
-            }
-            //private set { }
-        }
-
-        public void AddSortField(string fieldName, int sortOrder, bool isDesc)
-        {
-            if (_sort == null)
-                _sort = new List<SortItem>();
-
-            var item = _sort.FirstOrDefault(s => s.FieldName.Equals(fieldName, StringComparison.OrdinalIgnoreCase));
-            if (item == null)
-                _sort.Add(new SortItem() { FieldName = fieldName, SortOrder = sortOrder, IsDesc = isDesc });
-            else
-            {
-                item.SortOrder = sortOrder;
-                item.IsDesc = isDesc;
-            }
-
-
-        }
     }
 }

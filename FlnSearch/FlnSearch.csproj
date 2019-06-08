@@ -46,11 +46,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AwsSearch.cs" />
+    <Compile Include="Domain\BulkDeleteResponse.cs" />
     <Compile Include="Domain\BulkLoadResponse.cs" />
+    <Compile Include="Domain\DeleteRequest.cs" />
     <Compile Include="Domain\IndexResponse.cs" />
     <Compile Include="Domain\OrderRecord.cs" />
     <Compile Include="Domain\OrderSearch.cs" />
     <Compile Include="Domain\SearchItem.cs" />
+    <Compile Include="Domain\QueryRequest.cs" />
     <Compile Include="Domain\SearchRequest.cs" />
     <Compile Include="Domain\SearchResult.cs" />
     <Compile Include="Domain\SearchResultItem.cs" />

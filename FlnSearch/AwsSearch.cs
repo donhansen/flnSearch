@@ -80,6 +80,17 @@ namespace FlnSearch
             return responseBody;
         }
 
+        private async Task<string> DeleteAsync(string url, string jsonText)
+        {
+            var content = new StringContent(jsonText, Encoding.UTF8, "application/json");
+            var response = await _httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Delete, url) { Content = content });
+            response.EnsureSuccessStatusCode();
+
+            var responseBody = await response.Content.ReadAsStringAsync();
+            return responseBody;
+
+        }
+
         private async Task<string> PutAsync(string url, string jsonText)
         {
             var content = new StringContent(jsonText, Encoding.UTF8, "application/json");
@@ -238,12 +249,11 @@ namespace FlnSearch
             return response;
         }
 
-        public SearchResult DoSearch(SearchRequest request)
+        public SearchResult DoSearch(QueryRequest request)
         {
             var searchresult = new SearchResult();
-
+            var requestText = request.GenerateQuery();
             var url = string.Format("{0}/{1}/_search", _baseUrl, _index);
-            var requestText = request.GenerateSearchQuery();
             var responseJson = PostAsync(url, requestText).Result;
 
             JObject awsSearch = JObject.Parse(responseJson);
@@ -285,6 +295,17 @@ namespace FlnSearch
             }
             return searchresult;
         }
+
+        public BulkDeleteResponse BulkDelete(QueryRequest request)
+        {
+            var url = string.Format("{0}/{1}/_delete_by_query", _baseUrl, _index);
+            var requestText = request.GenerateQuery();
+            var responseJson = PostAsync(url, requestText).Result;
+
+            BulkDeleteResponse response = JsonConvert.DeserializeObject<BulkDeleteResponse>(responseJson);
+            return response;
+        }
+
         private static object GetValue(JToken value)
         {
             var type = value.Type;

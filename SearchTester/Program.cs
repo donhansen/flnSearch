@@ -13,11 +13,13 @@ namespace SearchTester
     {
         static void Main(string[] args)
         {
-            //LoadData();
+            Console.WriteLine("Run Load?");
+            if (Console.ReadKey().KeyChar == 'y')
+                LoadData();
             //LoadRange(@"C:\Users\Niels Hansen\Documents\Visual Studio 2012\Projects\FlnSearch\SearchTester\file3.rpt", 76084,1);
 
             string readLineText = string.Empty;
-           
+
             while (readLineText.ToLower() != "x")
             {
                 //Console.WriteLine("DELETE Index Name:");
@@ -30,45 +32,62 @@ namespace SearchTester
                 //if (!string.IsNullOrEmpty(indexName))
                 //    CreateIndex(indexName);
 
-                Console.WriteLine("Enter Max count");
-                var requestCount = Console.ReadLine();
-                if (string.IsNullOrEmpty(requestCount))
-                    requestCount = "20";
 
-                int count = Convert.ToInt32(requestCount);
+                ConductSearch(new SearchRequest()
+                 {
+                     Size = 20,
+                     From = 0,
+                     CustomerNumber = 5914,
+                     StartDate = new DateTime(2019, 5, 1),
+                     EndDate = DateTime.Now,
+                 }
+                 , new List<string> { "OrderDate", "OrderStatus" });
 
-                var request = new SearchRequest() { Size = count};
-                request.CustomerNumber = 5914;
-                //request.OrderNumber = 4012028;
-                //request.OrderStatus = "Entered";
-                //request.ServiceType = 88;
-                request.StartDate = new DateTime(2019, 6, 1);
-                request.EndDate = new DateTime(2019, 6, 12);
-                request.AddSortField("OrderDate", 0, true);// SortByField = "OrderDate";
-                request.AddSortField("OrderStatus", 1, false);
-                var result = Search(request);
 
-                Console.WriteLine(string.Format("{0} records found", result.MatchCount));
-                if (result.MatchCount > 0)
+                Console.WriteLine("Run Delete?");
+                if (Console.ReadKey().KeyChar == 'y')
                 {
-                    int total = count;
-                    if(result.MatchCount < count)
-                        total = result.MatchCount;
+                    BulkDelete(new DeleteRequest() { StartDate = new DateTime(2019, 1, 1), EndDate = new DateTime(2019, 5, 31) });
 
-                    for (var i = 0; i < total; i++)
-                    {
-                        var item = result.ResultItems[i];
-                        Console.WriteLine(string.Format("Customer Number:{0}; OrderDate:{1};Status:{2} LastUpdateDate:{3}; Score:{4}",item.CustomerNumber, item.OrderDate, item.OrderStatus, item.LastUpdateDate, item.Score  ));
-                    }
-                }
-
+                    ConductSearch(new SearchRequest()
+                  {
+                      Size = 20,
+                      From = 10,
+                      CustomerNumber = 5914,
+                      StartDate = new DateTime(2019, 5, 1),
+                      EndDate = DateTime.Now,
+                  }
+                  , new List<string> { "OrderDate", "OrderStatus" });
+                };
                 Console.WriteLine("__________________________________________________");
 
                 Console.WriteLine("Enter 'x' to quit or enter to start a new search");
                 readLineText = Console.ReadLine();
-
-
             }
+        }
+
+        private static void ConductSearch(SearchRequest request, List<string> sortFields)
+        {
+            if (sortFields != null)
+            {
+                for (var i = 0; i < sortFields.Count; i++)
+                    request.AddSortField(sortFields[i], i, false);
+            }
+
+            var result = Search(request);
+
+            Console.WriteLine(string.Format("{0} records found", result.MatchCount));
+            if (result.MatchCount > 0)
+            {
+
+                for (var i = 0; i < result.ResultItems.Count; i++)
+                {
+                    Console.WriteLine(string.Format("-_-_-_-_-_-_-_-_-_- RECORD: {0}_-_-_-_-_-_-_-_-_-_-_-_-_-_", i));
+                    var item = result.ResultItems[i];
+                    Console.WriteLine(string.Format("Customer Number:{0}; OrderDate:{1};Status:{2} LastUpdateDate:{3}; Score:{4}", item.CustomerNumber, item.OrderDate, item.OrderStatus, item.LastUpdateDate, item.Score));
+                }
+            }
+
         }
 
         private static void LoadData()
@@ -96,7 +115,16 @@ namespace SearchTester
             search.GenerateIndex(name);
         }
 
-        public static SearchResult Search(SearchRequest request)
+        public static void BulkDelete(QueryRequest request)
+        {
+            var search = new FlnSearch.AwsSearch();
+            var response = search.BulkDelete(request);
+
+            Console.WriteLine(string.Format("\t\tRecords deleted:{0}", response.Deleted));
+
+        }
+
+        public static SearchResult Search(QueryRequest request)
         {
             var search = new FlnSearch.AwsSearch();
             var results = search.DoSearch(request);
