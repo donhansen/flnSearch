@@ -27,6 +27,7 @@ namespace FlnSearch
             { "RecipientCompany", "text" },
             { "RecipientName", "text" },
             { "ClientMatter", "text" },  
+            { "LastUpdateDate", "date"},
             };
 
         // private static readonly List<string> FieldNames = new List<string> { "CustomerNumber", "OrderNumber", "OrderDate" };
@@ -112,7 +113,7 @@ namespace FlnSearch
         //    return responseBody;
         //}
 
-        public void GenerateIndex(string indexName)
+        public IndexResponse GenerateIndex(string indexName)
         {
             var builder = new StringBuilder();
             builder.Append("{");
@@ -140,17 +141,38 @@ namespace FlnSearch
             var url = string.Format("{0}/{1}", _baseUrl, indexName);
             var content = builder.ToString();
 
-            var result = PutAsync(url, content.ToString()).Result;
+            try
+            {
+                var result = PutAsync(url, content.ToString()).Result;
+                var response = JsonConvert.DeserializeObject<IndexResponse>(result);
+                return response;
+            }
+            catch (Exception ex)
+            {
+                return new IndexResponse() { Acknowledged = false, Index = indexName, Exception = ex };
+            };
+
 
         }
 
-        public void DeleteIndex(string indexName)
+        public IndexResponse DeleteIndex(string indexName)
         {
-            var result = RemoveIndex(indexName).Result;
+            try
+            {
+                var result = RemoveIndex(indexName).Result;
+                var response = JsonConvert.DeserializeObject<IndexResponse>(result);
+                return response;
+            }
+            catch (Exception ex)
+            {
+                return new IndexResponse() { Acknowledged = false, Index = indexName, Exception = ex };
+            }
+
         }
 
-        public void BulkLoad(List<OrderRecord> records)
+        public BulkLoadResponse BulkLoad(List<OrderRecord> records)
         {
+            var response = new BulkLoadResponse();
             var builder = new StringBuilder();
 
             foreach (var record in records)
@@ -177,14 +199,43 @@ namespace FlnSearch
                 if (!string.IsNullOrEmpty(record.ClientMatter))
                     builder.AppendFormat(",\"ClientMatter\":\"{0}\"", record.ClientMatter.Trim());
 
+                builder.AppendFormat(",\"LastUpdateDate\":\"{0}\"", record.LastUpdateDate.ToString("yyyy-MM-ddTHH:mm:ssZ"));
+
                 builder.Append("}");
                 builder.Append(Environment.NewLine);
-                //builder.AppendFormat("{{\"LastUpdateDate\": \"{0}\" }},",record.LastUpdateDate);
             }
 
             var content = builder.ToString();
 
             var result = PostAsync(string.Format("{0}/_bulk", _baseUrl), content).Result;
+
+            var root = JToken.Parse(result);
+            response.Took = (int)root["took"];
+            response.Errors = (bool)root["errors"];
+
+            List<JToken> itemResults = root["items"].Children().ToList();
+
+            response.RecordsInBatch = itemResults.Count;
+
+            //only get the error items.  Getting all items has a big impact on performance
+            if (response.Errors)
+            {
+                foreach (var token in itemResults)
+                {
+                    var tokenError = token["index"]["error"];
+                    if (tokenError != null)
+                    {
+                        LoadItemResult item = token["index"].ToObject<LoadItemResult>();
+                        var error = tokenError.ToObject<LoadError>();
+                        error.SubType = tokenError["caused_by"]["type"].ToString();
+                        error.Message = tokenError["caused_by"]["reason"].ToString();
+                        item.Error = error;
+
+                        response.FailedItems.Add(item);
+                    }
+                }
+            }
+            return response;
         }
 
         public SearchResult DoSearch(SearchRequest request)

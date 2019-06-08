@@ -46,6 +46,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AwsSearch.cs" />
+    <Compile Include="Domain\BulkLoadResponse.cs" />
+    <Compile Include="Domain\IndexResponse.cs" />
     <Compile Include="Domain\OrderRecord.cs" />
     <Compile Include="Domain\OrderSearch.cs" />
     <Compile Include="Domain\SearchItem.cs" />

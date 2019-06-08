@@ -28,7 +28,7 @@ namespace FlnSearch.Domain
         public string RecipientCompany { get; set; }
         public string RecipientName { get; set; }
         public string Clientmatter { get; set; }
-
+        public DateTime LastUpdateDate { get; set; }
 
         private List<SearchItem> _source;
         public List<SearchItem> Source
