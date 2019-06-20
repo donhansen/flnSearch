@@ -9,8 +9,9 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>FlnSearch</RootNamespace>
     <AssemblyName>FlnSearch</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -33,6 +34,9 @@
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\..\..\..\..\..\..\gitProjects\fln\FirstLegalNetworkServices\bin\Newtonsoft.Json.dll</HintPath>
     </Reference>
+    <Reference Include="NLog">
+      <HintPath>..\..\..\..\..\..\..\gitProjects\fln\FirstLegalNetworkServices\thirdparty\NLog.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
@@ -51,13 +55,13 @@
     <Compile Include="Domain\DeleteRequest.cs" />
     <Compile Include="Domain\IndexResponse.cs" />
     <Compile Include="Domain\OrderRecord.cs" />
-    <Compile Include="Domain\OrderSearch.cs" />
     <Compile Include="Domain\SearchItem.cs" />
     <Compile Include="Domain\QueryRequest.cs" />
     <Compile Include="Domain\SearchRequest.cs" />
     <Compile Include="Domain\SearchResult.cs" />
     <Compile Include="Domain\SearchResultItem.cs" />
     <Compile Include="Domain\SortItem.cs" />
+    <Compile Include="Helpers\StringCleaner.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

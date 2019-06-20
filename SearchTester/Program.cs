@@ -35,11 +35,11 @@ namespace SearchTester
 
                 ConductSearch(new SearchRequest()
                  {
-                     Size = 20,
+                     Size = 1,
                      From = 0,
                      CustomerNumber = 5914,
-                     StartDate = new DateTime(2019, 5, 1),
-                     EndDate = DateTime.Now,
+                     StartDate = new DateTime(2019, 6, 1),
+                     EndDate = new DateTime(2019, 6, 30),
                  }
                  , new List<string> { "OrderDate", "OrderStatus" });
 
@@ -87,12 +87,10 @@ namespace SearchTester
                     Console.WriteLine(string.Format("Customer Number:{0}; OrderDate:{1};Status:{2} LastUpdateDate:{3}; Score:{4}", item.CustomerNumber, item.OrderDate, item.OrderStatus, item.LastUpdateDate, item.Score));
                 }
             }
-
         }
 
         private static void LoadData()
         {
-            Console.WriteLine("loading file...");
             var bulkResponse = LoadIndex(@"C:\Users\Niels Hansen\Documents\Visual Studio 2012\Projects\FlnSearch\SearchTester\file1.rpt");
             Console.WriteLine(string.Format("Processes file:{0} records processed. Total errors: {1}", bulkResponse.RecordsInBatch, bulkResponse.FailedItems.Count));
             Console.WriteLine("loading file...");
@@ -200,13 +198,13 @@ namespace SearchTester
 
                 Console.WriteLine(string.Format("\tprocessing records :{0} thru {1}...", startIndex, startIndex + count));
                 var response = search.BulkLoad(batch);
+                bulkResponse.RecordsInBatch += response.RecordsInBatch;
                 Console.WriteLine(string.Format("\t\tProcess took: {0}", response.Took));
 
                 if (response.Errors)
                 {
                     bulkResponse.Errors = true;
                     bulkResponse.FailedItems.AddRange(response.FailedItems);
-                    bulkResponse.RecordsInBatch += response.RecordsInBatch;
                     Console.WriteLine(string.Format("\t{0} errors found", response.FailedItems.Count));
                 }
 

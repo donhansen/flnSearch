@@ -25,7 +25,7 @@ namespace FlnSearch.Domain
             for (var i = 0; i < qryProprties.Count(); i++)
             {
                 var property = qryProprties[i];
-                var value = property.GetValue(this);
+                var value = property.GetValue(this,null);
                 var type = property.GetType();
 
                 //if value not set then continue

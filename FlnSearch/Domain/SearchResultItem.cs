@@ -53,11 +53,11 @@ namespace FlnSearch.Domain
                 if (value != null)
                 {
                     DateTime date = new DateTime(Convert.ToInt64(value));
-                    propertyInfo.SetValue(this, date);
+                    propertyInfo.SetValue(this, date, null);
                 }
             }
             else
-                propertyInfo.SetValue(this, value);
+                propertyInfo.SetValue(this, value, null);
 
         }
 

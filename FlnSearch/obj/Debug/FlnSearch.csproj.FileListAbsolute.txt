@@ -5,3 +5,6 @@ c:\users\niels hansen\documents\visual studio 2012\Projects\FlnSearch\FlnSearch\
 c:\users\niels hansen\documents\visual studio 2012\Projects\FlnSearch\FlnSearch\obj\Debug\FlnSearch.dll
 c:\users\niels hansen\documents\visual studio 2012\Projects\FlnSearch\FlnSearch\obj\Debug\FlnSearch.pdb
 C:\Users\Niels Hansen\documents\visual studio 2012\Projects\FlnSearch\FlnSearch\bin\Debug\Newtonsoft.Json.dll
+C:\Users\Niels Hansen\Documents\Visual Studio 2012\Projects\FlnSearch\FlnSearch\bin\Debug\System.Net.Http.dll
+C:\Users\Niels Hansen\Documents\Visual Studio 2012\Projects\FlnSearch\FlnSearch\bin\Debug\System.Net.Http.xml
+C:\Users\Niels Hansen\Documents\Visual Studio 2012\Projects\FlnSearch\FlnSearch\bin\Debug\NLog.dll

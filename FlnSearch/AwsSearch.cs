@@ -9,11 +9,13 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using FlnSearch.Domain;
 using System.Reflection;
-
+using System.Net.Http;
+using NLog;
 namespace FlnSearch
 {
     public class AwsSearch
     {
+        private static Logger logger = LogManager.GetLogger("AwsSearch");
 
         private static readonly Dictionary<string, string> Mappings
             = new Dictionary<string, string> { 
@@ -48,68 +50,55 @@ namespace FlnSearch
             _index = ConfigurationManager.AppSettings["index"];
         }
 
-        public async Task<string> RunSearchGet(string index, string searchText, int size)
+        
+        private  Task<string> RemoveIndex(string indexName)
         {
-            string query = size > 0
-                ? string.Format("{0}&size={1}", searchText, size)
-                : searchText;
+            var response =  _httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Delete, string.Format("{0}/{1}", _baseUrl, indexName)));
+            return response.Result.Content.ReadAsStringAsync();
 
-            var url = string.Format("{0}/{1}/_search?q={2}", _baseUrl, index, query);
-
-            try
-            {
-                HttpResponseMessage response = await _httpClient.GetAsync(url);
-                response.EnsureSuccessStatusCode();
-                var responseBody = await response.Content.ReadAsStringAsync();
-                return responseBody;
-            }
-            catch (HttpRequestException ex)
-            {
-
-                Console.WriteLine("\nException Caught");
-                Console.WriteLine("Message :{0}", ex.Message);
-                return ex.Message;
-            }
-        }
-        private async Task<string> RemoveIndex(string indexName)
-        {
-            var response = await _httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Delete, string.Format("{0}/{1}", _baseUrl, indexName)));
-            response.EnsureSuccessStatusCode();
-
-            var responseBody = await response.Content.ReadAsStringAsync();
-            return responseBody;
         }
 
-        private async Task<string> DeleteAsync(string url, string jsonText)
+        private  Task<string> DeleteAsync(string url, string jsonText)
         {
             var content = new StringContent(jsonText, Encoding.UTF8, "application/json");
-            var response = await _httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Delete, url) { Content = content });
-            response.EnsureSuccessStatusCode();
-
-            var responseBody = await response.Content.ReadAsStringAsync();
-            return responseBody;
+            var response =  _httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Delete, url) { Content = content });
+            return response.Result.Content.ReadAsStringAsync();
 
         }
 
-        private async Task<string> PutAsync(string url, string jsonText)
+        private  Task<string> PutAsync(string url, string jsonText)
         {
             var content = new StringContent(jsonText, Encoding.UTF8, "application/json");
-            var response = await _httpClient.PutAsync(url, content);
-            response.EnsureSuccessStatusCode();
+            var response =  _httpClient.PutAsync(url, content);
+            //response.EnsureSuccessStatusCode();
 
-            var responseBody = await response.Content.ReadAsStringAsync();
-            return responseBody;
+            return response.Result.Content.ReadAsStringAsync();
         }
 
-        private async Task<string> PostAsync(string url, string jsonText)
+        //private async Task<string> PostAsync(string url, string jsonText)
+        //{
+        //    var content = new StringContent(jsonText, Encoding.UTF8, "application/json");
+        //    var response = await _httpClient.PostAsync(url, content);
+        //    response.EnsureSuccessStatusCode();
+
+        //    var responseBody = await response.Content.ReadAsStringAsync();
+        //    return responseBody;
+        //}
+
+        private Task< string> PostAsync(string url, string jsonText)
         {
+            
             var content = new StringContent(jsonText, Encoding.UTF8, "application/json");
-            var response = await _httpClient.PostAsync(url, content);
-            response.EnsureSuccessStatusCode();
+            var response =  _httpClient.PostAsync(url, content);
 
-            var responseBody = await response.Content.ReadAsStringAsync();
-            return responseBody;
+            return response.Result.Content.ReadAsStringAsync();
+
+
+            //var responseBody =  response. Content.ReadAsStringAsync();
+            //return responseBody;
         }
+
+
 
         //private async Task<string> RunSearchPost(string searchText)
         //{
@@ -197,18 +186,18 @@ namespace FlnSearch
                 builder.AppendFormat(",\"ServiceType\":{0}", record.ServiceType);
                 if (!string.IsNullOrEmpty(record.OrderStatusCode))
                 {
-                    builder.AppendFormat(",\"OrderStatusCode\":\"{0}\"", record.OrderStatusCode.Trim());
-                    builder.AppendFormat(",\"OrderStatus\":\"{0}\"", record.OrderStatus.Trim());
+                    builder.AppendFormat(",\"OrderStatusCode\":\"{0}\"", record.OrderStatusCode.Trim().Replace(@"\", @"\\").Replace("\"", "\\\""));
+                    builder.AppendFormat(",\"OrderStatus\":\"{0}\"", record.OrderStatus.Trim().Replace(@"\", @"\\").Replace("\"", "\\\""));
                 }
                 builder.AppendFormat(",\"CustomerNumber\":{0}", record.CustomerNumber);
                 if (!string.IsNullOrEmpty(record.BolNumber))
-                    builder.AppendFormat(",\"BolNumber\":\"{0}\"", record.BolNumber.Trim());
+                    builder.AppendFormat(",\"BolNumber\":\"{0}\"", record.BolNumber.Trim().Replace(@"\", @"\\").Replace("\"", "\\\""));
                 if (!string.IsNullOrEmpty(record.RecipientCompany))
-                    builder.AppendFormat(",\"RecipientCompany\":\"{0}\"", record.RecipientCompany.Trim());
+                    builder.AppendFormat(",\"RecipientCompany\":\"{0}\"", record.RecipientCompany.Trim().Replace(@"\", @"\\").Replace("\"", "\\\""));
                 if (!string.IsNullOrEmpty(record.RecipientName))
-                    builder.AppendFormat(",\"RecipientName\":\"{0}\"", record.RecipientName.Trim());
+                    builder.AppendFormat(",\"RecipientName\":\"{0}\"", record.RecipientName.Trim().Replace(@"\", @"\\").Replace("\"", "\\\""));
                 if (!string.IsNullOrEmpty(record.ClientMatter))
-                    builder.AppendFormat(",\"ClientMatter\":\"{0}\"", record.ClientMatter.Trim());
+                    builder.AppendFormat(",\"ClientMatter\":\"{0}\"", record.ClientMatter.Trim().Replace(@"\", @"\\").Replace("\"", "\\\""));
 
                 builder.AppendFormat(",\"LastUpdateDate\":\"{0}\"", record.LastUpdateDate.ToString("yyyy-MM-ddTHH:mm:ssZ"));
 
@@ -243,6 +232,7 @@ namespace FlnSearch
                         item.Error = error;
 
                         response.FailedItems.Add(item);
+                        logger.Debug(string.Format("Error:{0}::id:{1}\r\n\t{2}\r\n\t{3}\r\n------------------------------------",item.Error,item.Id, item.Error.Reason, item.Error.Message  ));
                     }
                 }
             }
