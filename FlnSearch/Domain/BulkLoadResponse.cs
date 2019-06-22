@@ -43,8 +43,9 @@ namespace FlnSearch.Domain
         [JsonProperty(PropertyName = "errors")]
         public bool Errors { get; set; }
 
-        public int RecordsInBatch { get;set;}
+        public int RecordsInBatch { get; set; }
 
+        public string ResponseMessage { get; set; }
         private List<LoadItemResult> _failedItems;
         public List<LoadItemResult> FailedItems
         {
@@ -58,14 +59,6 @@ namespace FlnSearch.Domain
             }
             set { _failedItems = value; }
         }
-
-        //public List<LoadItemResult> ErrorItems
-        //{
-        //    get
-        //    {
-        //        return FailedItems.Where(r => r.Error != null).ToList();
-        //    }
-        //}
     }
 }
 

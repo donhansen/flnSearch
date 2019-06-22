@@ -32,8 +32,6 @@ namespace FlnSearch
             { "LastUpdateDate", "date"},
             };
 
-        // private static readonly List<string> FieldNames = new List<string> { "CustomerNumber", "OrderNumber", "OrderDate" };
-
         private string _baseUrl;
         private string _index;
 
@@ -48,33 +46,55 @@ namespace FlnSearch
         {
             _baseUrl = ConfigurationManager.AppSettings["searchUrl"];
             _index = ConfigurationManager.AppSettings["index"];
+
+            logger.Debug(string.Format("AwsSearch: BaseUrl:'{0}'; Index:'{1}'", _baseUrl, _index));
         }
 
-        
-        private  Task<string> RemoveIndex(string indexName)
+        private Task<string> RemoveIndex(string indexName)
         {
-            var response =  _httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Delete, string.Format("{0}/{1}", _baseUrl, indexName)));
-            return response.Result.Content.ReadAsStringAsync();
+            try
+            {
+                var response = _httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Delete, string.Format("{0}/{1}", _baseUrl, indexName)));
+                return response.Result.Content.ReadAsStringAsync();
 
+            }
+            catch (Exception ex)
+            {
+                logger.Error(string.Format("{0} Failed.\r\n:{1}", "RemoveIndex", ex.Message));
+                throw;
+            }
         }
 
-        private  Task<string> DeleteAsync(string url, string jsonText)
+        private Task<string> DeleteAsync(string url, string jsonText)
         {
-            var content = new StringContent(jsonText, Encoding.UTF8, "application/json");
-            var response =  _httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Delete, url) { Content = content });
-            return response.Result.Content.ReadAsStringAsync();
-
+            try
+            {
+                var content = new StringContent(jsonText, Encoding.UTF8, "application/json");
+                var response = _httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Delete, url) { Content = content });
+                return response.Result.Content.ReadAsStringAsync();
+            }
+            catch (Exception ex)
+            {
+                logger.Error(string.Format("{0} Failed.\r\n:{1}", "DeleteAsync", ex.Message));
+                throw;
+            }
         }
 
-        private  Task<string> PutAsync(string url, string jsonText)
+        private Task<string> PutAsync(string url, string jsonText)
         {
-            var content = new StringContent(jsonText, Encoding.UTF8, "application/json");
-            var response =  _httpClient.PutAsync(url, content);
-            //response.EnsureSuccessStatusCode();
+            try
+            {
+                var content = new StringContent(jsonText, Encoding.UTF8, "application/json");
+                var response = _httpClient.PutAsync(url, content);
+                return response.Result.Content.ReadAsStringAsync();
 
-            return response.Result.Content.ReadAsStringAsync();
+            }
+            catch (Exception ex)
+            {
+                logger.Error(string.Format("{0} Failed.\r\n:{1}", "PutAsync", ex.Message));
+                throw;
+            }
         }
-
         //private async Task<string> PostAsync(string url, string jsonText)
         //{
         //    var content = new StringContent(jsonText, Encoding.UTF8, "application/json");
@@ -85,33 +105,22 @@ namespace FlnSearch
         //    return responseBody;
         //}
 
-        private Task< string> PostAsync(string url, string jsonText)
+        private Task<string> PostAsync(string url, string jsonText)
         {
-            
-            var content = new StringContent(jsonText, Encoding.UTF8, "application/json");
-            var response =  _httpClient.PostAsync(url, content);
 
-            return response.Result.Content.ReadAsStringAsync();
+            try
+            {
+                var content = new StringContent(jsonText, Encoding.UTF8, "application/json");
+                var response = _httpClient.PostAsync(url, content);
+                return response.Result.Content.ReadAsStringAsync();
 
-
-            //var responseBody =  response. Content.ReadAsStringAsync();
-            //return responseBody;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(string.Format("{0} Failed.\r\n:{1}", "PostSync", ex.Message));
+                throw;
+            }
         }
-
-
-
-        //private async Task<string> RunSearchPost(string searchText)
-        //{
-        //    var url = string.Format("{0}/orders/_search", _baseUrl);
-
-        //    var jsonText = string.Format("{{\"size\":20, \"query\":{{\"query_string\":{{\"query\":\"{0}\"}}}}}}", searchText);
-        //    var content = new StringContent(jsonText, Encoding.UTF8, "application/json");
-        //    var response = await _httpClient.PostAsync(url, content);
-        //    response.EnsureSuccessStatusCode();
-
-        //    var responseBody = await response.Content.ReadAsStringAsync();
-        //    return responseBody;
-        //}
 
         public IndexResponse GenerateIndex(string indexName)
         {
@@ -149,6 +158,7 @@ namespace FlnSearch
             }
             catch (Exception ex)
             {
+                logger.Error(string.Format("{0} Failed.\r\n:{1}", "GenerateIndex", ex.Message)); ;
                 return new IndexResponse() { Acknowledged = false, Index = indexName, Exception = ex };
             };
 
@@ -165,6 +175,7 @@ namespace FlnSearch
             }
             catch (Exception ex)
             {
+                logger.Error(string.Format("{0} Failed.\r\n:{1}", "DeleteIndex", ex.Message));
                 return new IndexResponse() { Acknowledged = false, Index = indexName, Exception = ex };
             }
 
@@ -205,16 +216,26 @@ namespace FlnSearch
                 builder.Append(Environment.NewLine);
             }
 
+            JToken root = null;
             var content = builder.ToString();
 
-            var result = PostAsync(string.Format("{0}/_bulk", _baseUrl), content).Result;
+            try
+            {
+                var result = PostAsync(string.Format("{0}/_bulk", _baseUrl), content).Result;
+                root = JToken.Parse(result);
+            }
+            catch (Exception ex)
+            {
+                logger.Error(string.Format("{0} Failed.\r\n:{1}", "BulkLoad", ex.Message));
+                response.Errors = true;
+                response.ResponseMessage = string.Format("{0} failed.\r\n{1}", "BulkLoad", ex.Message);
+                return response;
 
-            var root = JToken.Parse(result);
+            }
             response.Took = (int)root["took"];
             response.Errors = (bool)root["errors"];
 
             List<JToken> itemResults = root["items"].Children().ToList();
-
             response.RecordsInBatch = itemResults.Count;
 
             //only get the error items.  Getting all items has a big impact on performance
@@ -232,20 +253,33 @@ namespace FlnSearch
                         item.Error = error;
 
                         response.FailedItems.Add(item);
-                        logger.Debug(string.Format("Error:{0}::id:{1}\r\n\t{2}\r\n\t{3}\r\n------------------------------------",item.Error,item.Id, item.Error.Reason, item.Error.Message  ));
+                        logger.Debug(string.Format("Error:{0}::id:{1}\r\n\t{2}\r\n\t{3}\r\n------------------------------------", item.Error, item.Id, item.Error.Reason, item.Error.Message));
                     }
                 }
             }
+            response.ResponseMessage = string.Format("BulkLoad::{0} Total items; {1} items failed", response.RecordsInBatch, response.FailedItems.Count);
             return response;
         }
 
         public SearchResult DoSearch(QueryRequest request)
         {
-            var searchresult = new SearchResult();
+            var searchresult = new SearchResult(request.UniqueIdentifer);
             var requestText = request.GenerateQuery();
             var url = string.Format("{0}/{1}/_search", _baseUrl, _index);
-            var responseJson = PostAsync(url, requestText).Result;
 
+            if (logger.IsDebugEnabled)
+                logger.Debug(string.Format("Search Request Started - {0} -Time:{1}\r\n{2}", request.UniqueIdentifer, DateTime.Now.ToShortTimeString(), request.ToString()));
+
+            string responseJson;
+            try
+            {
+                responseJson = PostAsync(url, requestText).Result;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(string.Format("{0} -{1}- Failed.\r\n\t{2}", "DoSearch", request.UniqueIdentifer, ex.Message));
+                throw;
+            }
             JObject awsSearch = JObject.Parse(responseJson);
             searchresult.Took = (int)awsSearch["took"];
             searchresult.TimedOut = (bool)awsSearch["timed_out"];
@@ -283,6 +317,9 @@ namespace FlnSearch
                 }
                 searchresult.AddSearchResultItem(resultItem);
             }
+            if (logger.IsDebugEnabled)
+                logger.Debug(string.Format("Search {0} Complete: Time: {1})", searchresult.UniqueIdentifier, DateTime.Now.ToShortTimeString()));
+
             return searchresult;
         }
 
@@ -290,10 +327,27 @@ namespace FlnSearch
         {
             var url = string.Format("{0}/{1}/_delete_by_query", _baseUrl, _index);
             var requestText = request.GenerateQuery();
-            var responseJson = PostAsync(url, requestText).Result;
 
-            BulkDeleteResponse response = JsonConvert.DeserializeObject<BulkDeleteResponse>(responseJson);
-            return response;
+            if (logger.IsDebugEnabled)
+                logger.Debug(string.Format("Delete Request {0} Started:{1}\r\n\tQuery:{2}", request.UniqueIdentifer, DateTime.Now.ToShortTimeString()), request.ToString());
+            try
+            {
+                var responseJson = PostAsync(url, requestText).Result;
+                BulkDeleteResponse response = JsonConvert.DeserializeObject<BulkDeleteResponse>(responseJson);
+                response.RequestIdentifier = request.UniqueIdentifer;
+
+                if (logger.IsDebugEnabled)
+                    logger.Debug(string.Format("Delete Request {0} completed: {1}", request.UniqueIdentifer, DateTime.Now.ToShortTimeString()));
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(string.Format("{0} -{1}- Failed.\r\n\t{2}", "DoSearch", request.UniqueIdentifer, ex.Message));
+                throw;
+            }
+
+
         }
 
         private static object GetValue(JToken value)

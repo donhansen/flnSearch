@@ -10,6 +10,10 @@ namespace FlnSearch.Domain
     [Serializable]
     public class BulkDeleteResponse
     {
+        
+
+        public string RequestIdentifier { get; set; }
+
         [JsonProperty(PropertyName = "took")]
         public int Took { get; set; }
         [JsonProperty(PropertyName = "timed_out")]

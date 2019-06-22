@@ -47,7 +47,7 @@ namespace SearchTester
                 Console.WriteLine("Run Delete?");
                 if (Console.ReadKey().KeyChar == 'y')
                 {
-                    BulkDelete(new DeleteRequest() { StartDate = new DateTime(2019, 1, 1), EndDate = new DateTime(2019, 5, 31) });
+                    BulkDelete(new DeleteRequest() { StartDate = new DateTime(2019, 1, 1), EndDate = DateTime.Now.AddDays(-90) });
 
                     ConductSearch(new SearchRequest()
                   {
@@ -93,12 +93,12 @@ namespace SearchTester
         {
             var bulkResponse = LoadIndex(@"C:\Users\Niels Hansen\Documents\Visual Studio 2012\Projects\FlnSearch\SearchTester\file1.rpt");
             Console.WriteLine(string.Format("Processes file:{0} records processed. Total errors: {1}", bulkResponse.RecordsInBatch, bulkResponse.FailedItems.Count));
-            Console.WriteLine("loading file...");
-            bulkResponse = LoadIndex(@"C:\Users\Niels Hansen\Documents\Visual Studio 2012\Projects\FlnSearch\SearchTester\file2.rpt");
-            Console.WriteLine(string.Format("Processes file:{0} records processed. Total errors: {1}", bulkResponse.RecordsInBatch, bulkResponse.FailedItems.Count));
-            Console.WriteLine("loading file...");
-            bulkResponse = LoadIndex(@"C:\Users\Niels Hansen\Documents\Visual Studio 2012\Projects\FlnSearch\SearchTester\file3.rpt");
-            Console.WriteLine(string.Format("Processes file:{0} records processed. Total errors: {1}", bulkResponse.RecordsInBatch, bulkResponse.FailedItems.Count));
+        //    Console.WriteLine("loading file...");
+        //    bulkResponse = LoadIndex(@"C:\Users\Niels Hansen\Documents\Visual Studio 2012\Projects\FlnSearch\SearchTester\file2.rpt");
+        //    Console.WriteLine(string.Format("Processes file:{0} records processed. Total errors: {1}", bulkResponse.RecordsInBatch, bulkResponse.FailedItems.Count));
+        //    Console.WriteLine("loading file...");
+        //    bulkResponse = LoadIndex(@"C:\Users\Niels Hansen\Documents\Visual Studio 2012\Projects\FlnSearch\SearchTester\file3.rpt");
+        //    Console.WriteLine(string.Format("Processes file:{0} records processed. Total errors: {1}", bulkResponse.RecordsInBatch, bulkResponse.FailedItems.Count));
         }
 
         public static void DeleteIndex(string name)

@@ -9,6 +9,13 @@ namespace FlnSearch.Domain
 {
     public class SearchResult
     {
+        public SearchResult(string requestIdentifier)
+        {
+            this.UniqueIdentifier = requestIdentifier;
+        }
+
+        public string UniqueIdentifier { get; private set; }
+
         [JsonProperty(PropertyName = "took")]
         public int Took { get; set; }
         [JsonProperty(PropertyName = "timed_out")]

@@ -7,8 +7,12 @@ using System.Reflection;
 
 namespace FlnSearch.Domain
 {
-    public class DeleteRequest: QueryRequest
+    public class DeleteRequest : QueryRequest
     {
+        public DeleteRequest()
+            : base()
+        { }
+
         public override string GenerateQuery()
         {
             var qryProprties = this.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public).Where(p => p.CanRead && p.CanWrite && QueryFields.Contains(p.Name)).ToArray();
@@ -25,7 +29,7 @@ namespace FlnSearch.Domain
             for (var i = 0; i < qryProprties.Count(); i++)
             {
                 var property = qryProprties[i];
-                var value = property.GetValue(this,null);
+                var value = property.GetValue(this, null);
                 var type = property.GetType();
 
                 //if value not set then continue

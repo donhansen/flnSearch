@@ -9,6 +9,12 @@ namespace FlnSearch.Domain
 {
     public class SearchRequest : QueryRequest
     {
+        public SearchRequest()
+            : base()
+        {
+
+        }
+
         public override string GenerateQuery()
         {
             var qryProprties = this.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public).Where(p => p.CanRead && p.CanWrite && QueryFields.Contains(p.Name)).ToArray();
@@ -16,7 +22,7 @@ namespace FlnSearch.Domain
             StringBuilder qry = new StringBuilder();
             qry.Append("{");
             qry.AppendFormat("\"from\":{0},\"size\":{1},", From.GetValueOrDefault(0), Size.GetValueOrDefault(20));
-            
+
             qry.Append("\"query\":");
             qry.Append("{");//query
             qry.Append("\"bool\":");
