@@ -22,24 +22,24 @@ namespace SearchTester
 
             while (readLineText.ToLower() != "x")
             {
-                //Console.WriteLine("DELETE Index Name:");
-                //var indexName = Console.ReadLine();
-                //if (!string.IsNullOrEmpty(indexName))
-                //    DeleteIndex(indexName);
+                Console.WriteLine("DELETE Index Name:");
+                var indexName = Console.ReadLine();
+                if (!string.IsNullOrEmpty(indexName))
+                    DeleteIndex(indexName);
 
-                //Console.WriteLine("CREATE Index Name:");
-                //indexName = Console.ReadLine();
-                //if (!string.IsNullOrEmpty(indexName))
-                //    CreateIndex(indexName);
+                Console.WriteLine("CREATE Index Name:");
+                indexName = Console.ReadLine();
+                if (!string.IsNullOrEmpty(indexName))
+                    CreateIndex(indexName);
 
 
                 ConductSearch(new SearchRequest()
                  {
                      Size = 1,
                      From = 0,
-                     CustomerNumber = 5914,
-                     StartDate = new DateTime(2019, 6, 1),
-                     EndDate = new DateTime(2019, 6, 30),
+                     //CustomerNumber = 5914,
+                     StartDate = DateTime.MinValue,
+                     EndDate = DateTime.MaxValue,
                  }
                  , new List<string> { "OrderDate", "OrderStatus" });
 
@@ -47,15 +47,15 @@ namespace SearchTester
                 Console.WriteLine("Run Delete?");
                 if (Console.ReadKey().KeyChar == 'y')
                 {
-                    BulkDelete(new DeleteRequest() { StartDate = new DateTime(2019, 1, 1), EndDate = DateTime.Now.AddDays(-90) });
+                    BulkDelete(new DeleteRequest() { StartDate = DateTime.MinValue, EndDate = DateTime.Now.AddDays(100) });
 
                     ConductSearch(new SearchRequest()
                   {
                       Size = 20,
                       From = 10,
                       CustomerNumber = 5914,
-                      StartDate =  new DateTime(2019, 5, 1),
-                      EndDate = DateTime.Now.AddDays(-60),
+                      StartDate =  new DateTime(2019, 1, 1),
+                      EndDate = DateTime.Now.AddDays(1),
                   }
                   , new List<string> { "OrderDate", "OrderStatus" });
                 };

@@ -56,7 +56,7 @@ namespace FlnSearch.Domain
                 qry.Append("{");//filter
                 qry.Append("\"range\":");
                 qry.Append("{");//range
-                qry.AppendFormat("\"{0}\":", "OrderDateTicks");
+                qry.AppendFormat("\"{0}\":", "LastUpdateDateTicks");
                 qry.Append("{");//orderticks
 
                 if (StartDate.HasValue && EndDate.HasValue)

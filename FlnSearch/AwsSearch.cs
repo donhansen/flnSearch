@@ -34,6 +34,7 @@ namespace FlnSearch
             { "RecipientName", "text" },
             { "ClientMatter", "text" },  
             { "LastUpdateDate", "date"},
+            { "LastUpdateDateTicks", "long"},
             };
 
         private string _baseUrl;
@@ -291,6 +292,8 @@ namespace FlnSearch
                     builder.AppendFormat(",\"ClientMatter\":\"{0}\"", record.ClientMatter.Trim().Replace(@"\", @"\\").Replace("\"", "\\\""));
 
                 builder.AppendFormat(",\"LastUpdateDate\":\"{0}\"", record.LastUpdateDate.ToString("yyyy-MM-ddTHH:mm:ssZ"));
+                builder.AppendFormat(",\"LastUpdateDateTicks\":{0}", record.LastUpdateDate.Ticks);
+
 
                 builder.Append("}");
                 builder.Append(Environment.NewLine);
@@ -348,7 +351,7 @@ namespace FlnSearch
             var url = string.Format("{0}/{1}/_search", _baseUrl, _index);
 
             if (logger.IsDebugEnabled)
-                logger.Debug(string.Format("Search Request Started - {0} -Time:{1}\r\n{2}", request.UniqueIdentifer, DateTime.Now.ToShortTimeString(), request.ToString()));
+                logger.Debug(string.Format("Search Request Started - {0} -Time:{1} {2}", request.UniqueIdentifer, DateTime.Now.ToShortTimeString(), request.ToString()));
 
             string responseJson;
             try
@@ -357,7 +360,7 @@ namespace FlnSearch
             }
             catch (Exception ex)
             {
-                logger.Error(string.Format("{0} -{1}- Failed.\r\n\t{2}", "DoSearch", request.UniqueIdentifer, ex.Message));
+                logger.Error(string.Format("{0} -{1}- Failed. {2}", "DoSearch", request.UniqueIdentifer, ex.Message));
                 throw;
             }
             JObject awsSearch = JObject.Parse(responseJson);
@@ -400,6 +403,8 @@ namespace FlnSearch
             if (logger.IsDebugEnabled)
                 logger.Debug(string.Format("Search {0} Complete: Time: {1})", searchresult.UniqueIdentifier, DateTime.Now.ToShortTimeString()));
 
+            
+            
             return searchresult;
         }
 
@@ -421,14 +426,14 @@ namespace FlnSearch
 
                 if (logger.IsDebugEnabled)
                 {
-                    logger.Debug(string.Format("Delete Request {0} completed: {1}", request.UniqueIdentifer, DateTime.Now.ToShortTimeString()));
+                    logger.Debug(string.Format("Delete Request {0} completed: {1}; {2} Records deleted", request.UniqueIdentifer, DateTime.Now.ToShortTimeString(), response.Deleted));
                     logger.Debug("+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+");
                 }
                 return response;
             }
             catch (Exception ex)
             {
-                logger.Error(string.Format("{0} -{1}- Failed.\r\n\t{2}", "DoSearch", request.UniqueIdentifer, ex.Message));
+                logger.Error(string.Format("{0} -{1}- Failed. {2}", "DoSearch", request.UniqueIdentifer, ex.Message));
                 throw;
             }
 
