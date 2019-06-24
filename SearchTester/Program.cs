@@ -54,8 +54,8 @@ namespace SearchTester
                       Size = 20,
                       From = 10,
                       CustomerNumber = 5914,
-                      StartDate = new DateTime(2019, 5, 1),
-                      EndDate = DateTime.Now,
+                      StartDate =  new DateTime(2019, 5, 1),
+                      EndDate = DateTime.Now.AddDays(-60),
                   }
                   , new List<string> { "OrderDate", "OrderStatus" });
                 };
@@ -91,14 +91,17 @@ namespace SearchTester
 
         private static void LoadData()
         {
-            var bulkResponse = LoadIndex(@"C:\Users\Niels Hansen\Documents\Visual Studio 2012\Projects\FlnSearch\SearchTester\file1.rpt");
-            Console.WriteLine(string.Format("Processes file:{0} records processed. Total errors: {1}", bulkResponse.RecordsInBatch, bulkResponse.FailedItems.Count));
-        //    Console.WriteLine("loading file...");
-        //    bulkResponse = LoadIndex(@"C:\Users\Niels Hansen\Documents\Visual Studio 2012\Projects\FlnSearch\SearchTester\file2.rpt");
-        //    Console.WriteLine(string.Format("Processes file:{0} records processed. Total errors: {1}", bulkResponse.RecordsInBatch, bulkResponse.FailedItems.Count));
-        //    Console.WriteLine("loading file...");
-        //    bulkResponse = LoadIndex(@"C:\Users\Niels Hansen\Documents\Visual Studio 2012\Projects\FlnSearch\SearchTester\file3.rpt");
-        //    Console.WriteLine(string.Format("Processes file:{0} records processed. Total errors: {1}", bulkResponse.RecordsInBatch, bulkResponse.FailedItems.Count));
+            var search = new FlnSearch.AwsSearch();
+            search.LoadDataFromSource(DateTime.Now.AddMinutes(-5), DateTime.Now.AddDays(1));
+
+            //    var bulkResponse = LoadIndex(@"C:\Users\Niels Hansen\Documents\Visual Studio 2012\Projects\FlnSearch\SearchTester\file1.rpt");
+            //    Console.WriteLine(string.Format("Processes file:{0} records processed. Total errors: {1}", bulkResponse.RecordsInBatch, bulkResponse.FailedItems.Count));
+            //    Console.WriteLine("loading file...");
+            //    bulkResponse = LoadIndex(@"C:\Users\Niels Hansen\Documents\Visual Studio 2012\Projects\FlnSearch\SearchTester\file2.rpt");
+            //    Console.WriteLine(string.Format("Processes file:{0} records processed. Total errors: {1}", bulkResponse.RecordsInBatch, bulkResponse.FailedItems.Count));
+            //    Console.WriteLine("loading file...");
+            //    bulkResponse = LoadIndex(@"C:\Users\Niels Hansen\Documents\Visual Studio 2012\Projects\FlnSearch\SearchTester\file3.rpt");
+            //    Console.WriteLine(string.Format("Processes file:{0} records processed. Total errors: {1}", bulkResponse.RecordsInBatch, bulkResponse.FailedItems.Count));
         }
 
         public static void DeleteIndex(string name)

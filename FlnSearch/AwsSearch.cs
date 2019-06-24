@@ -11,10 +11,14 @@ using FlnSearch.Domain;
 using System.Reflection;
 using System.Net.Http;
 using NLog;
+using System.Data;
+using System.Data.SqlClient;
+
 namespace FlnSearch
 {
     public class AwsSearch
     {
+        private static string connectionString = ConfigurationManager.ConnectionStrings["FLN"].ToString();
         private static Logger logger = LogManager.GetLogger("AwsSearch");
 
         private static readonly Dictionary<string, string> Mappings
@@ -181,6 +185,82 @@ namespace FlnSearch
 
         }
 
+        public BulkLoadResponse LoadDataFromSource(DateTime startDate, DateTime enddate)
+        {
+
+            logger.Debug("+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+");
+            logger.Debug(string.Format("LoadDataFromSource:: StartDate:{0} EndDate:{1}", startDate, enddate));
+
+            var orders = GetDataFromSql(startDate, enddate);
+            var bulkResponse = new BulkLoadResponse();
+            int recordsPerLoad = 2500;
+
+            var remainingCount = orders.Count();
+            var startIndex = 0;
+
+            while (remainingCount > 0)
+            {
+                var count = remainingCount > recordsPerLoad ? recordsPerLoad : remainingCount;
+                var batch = orders.GetRange(startIndex, count);
+
+                logger.Debug("+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+");
+                logger.Debug(string.Format("processing records<start> :{0} thru {1}...", startIndex, startIndex + count));
+                var response = BulkLoad(batch);
+                bulkResponse.RecordsInBatch += response.RecordsInBatch;
+                logger.Debug(string.Format("Process took: {0}", response.Took));
+
+                if (response.Errors)
+                {
+                    bulkResponse.Errors = true;
+                    bulkResponse.FailedItems.AddRange(response.FailedItems);
+                    logger.Debug(string.Format("{0} errors found", response.FailedItems.Count));
+                }
+                logger.Debug(string.Format("processing records<end> :{0} thru {1}", startIndex, startIndex + count));
+
+
+                remainingCount -= count;
+                startIndex += count;
+            }
+            return bulkResponse;
+        }
+
+        private List<OrderRecord> GetDataFromSql(DateTime startDate, DateTime endDate)
+        {
+            var results = new List<OrderRecord>();
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                using (SqlCommand cmd = new SqlCommand("FLN.GetSearchRecords", connection))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.Add("@StartDate", SqlDbType.DateTime).Value = startDate;
+                    cmd.Parameters.Add("@EndDate", SqlDbType.DateTime).Value = endDate;
+
+                    connection.Open();
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            var record = new OrderRecord();
+                            record.BolNumber = reader["BolNumber"] == DBNull.Value ? null : reader["BolNumber"].ToString();
+                            record.ClientMatter = reader["ClientMatter"] == DBNull.Value ? null : reader["ClientMatter"].ToString();
+                            record.CustomerNumber = reader["CustomerNumber"] == DBNull.Value ? 0 : Convert.ToInt32(reader["CustomerNumber"].ToString());
+                            record.LastUpdateDate = reader["LastUpdateDate"] == DBNull.Value ? DateTime.MinValue : Convert.ToDateTime(reader["LastUpdateDate"].ToString());
+                            record.OrderDate = reader["OrderDate"] == DBNull.Value ? DateTime.MinValue : Convert.ToDateTime(reader["OrderDate"].ToString());
+                            record.OrderNumber = reader["OrderNumber"] == DBNull.Value ? 0 : Convert.ToInt64(reader["OrderNumber"].ToString());
+                            record.OrderStatus = reader["OrderStatus"] == DBNull.Value ? null : reader["OrderStatus"].ToString();
+                            record.OrderStatusCode = reader["OrderStatusCode"] == DBNull.Value ? null : reader["OrderStatusCode"].ToString();
+                            record.RecipientCompany = reader["RecipientCompany"] == DBNull.Value ? null : reader["RecipientCompany"].ToString();
+                            record.RecipientName = reader["RecipientName"] == DBNull.Value ? null : reader["RecipientName"].ToString();
+                            record.RowNum = reader["RowNum"] == DBNull.Value ? 0 : Convert.ToInt32(reader["RowNum"].ToString());
+                            record.ServiceType = reader["ServiceType"] == DBNull.Value ? 0 : Convert.ToInt32(reader["ServiceType"].ToString());
+                            results.Add(record);
+                        }
+                    }
+                };
+            }
+            return results;
+        }
+
         public BulkLoadResponse BulkLoad(List<OrderRecord> records)
         {
             var response = new BulkLoadResponse();
@@ -329,7 +409,10 @@ namespace FlnSearch
             var requestText = request.GenerateQuery();
 
             if (logger.IsDebugEnabled)
-                logger.Debug(string.Format("Delete Request {0} Started:{1}\r\n\tQuery:{2}", request.UniqueIdentifer, DateTime.Now.ToShortTimeString()), request.ToString());
+            {
+                logger.Debug("+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+");
+                logger.Debug(string.Format("Delete Request {0} Started:{1}Query:{2}", request.UniqueIdentifer, DateTime.Now.ToShortTimeString(), request.ToString()));
+            }
             try
             {
                 var responseJson = PostAsync(url, requestText).Result;
@@ -337,8 +420,10 @@ namespace FlnSearch
                 response.RequestIdentifier = request.UniqueIdentifer;
 
                 if (logger.IsDebugEnabled)
+                {
                     logger.Debug(string.Format("Delete Request {0} completed: {1}", request.UniqueIdentifer, DateTime.Now.ToShortTimeString()));
-
+                    logger.Debug("+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+");
+                }
                 return response;
             }
             catch (Exception ex)
